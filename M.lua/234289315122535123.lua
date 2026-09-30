@@ -8,6 +8,10 @@ local TeleportService = game:GetService("TeleportService")
 local HttpService = game:GetService("HttpService")
 local UIS = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
+if not LocalPlayer then
+    pcall(function() Players:GetPropertyChangedSignal("LocalPlayer"):Wait() end)
+    LocalPlayer = LocalPlayer or Players.LocalPlayer
+end
 
 -- ===== lifecycle / connection tracking =====
 local running = true
@@ -15,8 +19,10 @@ local conns = {}
 local function track(c) conns[#conns + 1] = c return c end
 
 pcall(function()
-    LocalPlayer.DevCameraOcclusionMode = Enum.DevCameraOcclusionMode.Zoomless
-    LocalPlayer.CameraMode = Enum.CameraMode.Classic
+    if LocalPlayer then
+        LocalPlayer.DevCameraOcclusionMode = Enum.DevCameraOcclusionMode.Zoomless
+        LocalPlayer.CameraMode = Enum.CameraMode.Classic
+    end
 end)
 
 -- ===== character part cache (noclip) =====
@@ -34,7 +40,7 @@ local function noclipStep()
         if p.CanCollide then p.CanCollide = false end
     end
 end
-if LocalPlayer.Character then cacheParts(LocalPlayer.Character) end
+if LocalPlayer and LocalPlayer.Character then cacheParts(LocalPlayer.Character) end
 
 -- ===== forward declarations =====
 local Window, AimbotSettings, Whitelist, getArmor
@@ -236,41 +242,10 @@ pcall(function()
     end
 end)
 
--- Key verification (avatar / username)
+-- Key verification (optional avatar / username)
 local KeyAvatarURL = env.KeyAvatar
-if not KeyAvatarURL then
-    pcall(function()
-        if isfile and isfile("SingularityKey.txt") then
-            local savedKey = readfile("SingularityKey.txt")
-            if savedKey and savedKey ~= "" then
-                local user, id = LocalPlayer.Name, LocalPlayer.UserId
-                local req = (request or http_request or (syn and syn.request) or (http and http.request))
-                local json
-                if req then
-                    local res = req({
-                        Url = "https://projectsingularity.online/raw/verify-key",
-                        Method = "POST",
-                        Headers = { ["Content-Type"] = "application/json" },
-                        Body = HttpService:JSONEncode({ key = savedKey, rbx_user = user, rbx_id = id }),
-                    })
-                    json = HttpService:JSONDecode(res.Body)
-                else
-                    json = HttpService:JSONDecode(game:HttpGet(
-                        "https://projectsingularity.online/raw/verify-key?k=" .. savedKey ..
-                        "&rbx_user=" .. user .. "&rbx_id=" .. tostring(id)))
-                end
-                if json and json.valid and json.profile then
-                    env.KeyUsername = json.profile.username
-                    local a = json.profile.avatar_url
-                    if a and a ~= "" then KeyAvatarURL = a end
-                end
-            end
-        end
-    end)
-end
 
--- disk cache for UI libs (6h TTL). Delete HYPER_Cache folder to force refresh.
-local CACHE_TTL = 6 * 3600
+-- disk cache for UI libs with fresh GitHub sync.
 local function fetchCached(name)
     if typeof(isfile) == "function" then
         if isfile(name) then return readfile(name) end
@@ -279,16 +254,14 @@ local function fetchCached(name)
     end
     local can = typeof(isfile) == "function" and typeof(writefile) == "function" and typeof(readfile) == "function"
     local path, stamp = "HYPER_Cache/" .. name, "HYPER_Cache/" .. name .. ".t"
-    if can then
-        pcall(function() if makefolder and isfolder and not isfolder("HYPER_Cache") then makefolder("HYPER_Cache") end end)
-        if isfile(path) and isfile(stamp) then
-            local t = tonumber(readfile(stamp))
-            if t and (os.time() - t) < CACHE_TTL then return readfile(path) end
-        end
-    end
-    local ok, code = pcall(function() return game:HttpGet(REPO .. name) end)
+    
+    local ok, code = pcall(function() return game:HttpGet(REPO .. name .. "?t=" .. tostring(os.time())) end)
     if ok and code and #code > 0 then
-        if can then pcall(function() writefile(path, code); writefile(stamp, tostring(os.time())) end) end
+        if can then pcall(function()
+            if makefolder and isfolder and not isfolder("HYPER_Cache") then makefolder("HYPER_Cache") end
+            writefile(path, code)
+            writefile(stamp, tostring(os.time()))
+        end) end
         return code
     end
     if can and isfile(path) then return readfile(path) end -- stale fallback
