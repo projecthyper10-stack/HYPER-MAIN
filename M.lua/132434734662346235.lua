@@ -581,7 +581,7 @@ sections.SettingsMain:Button({
 --  Config & Init
 -- ==============================================================================
 
-MacLib:SetFolder("Maclib_LaundrySimulator")
+MacLib:SetFolder("x2hyper_LaundrySimulator")
 tabs.UISettings:InsertConfigSection("Right")
 
 Window.onUnloaded(function()
