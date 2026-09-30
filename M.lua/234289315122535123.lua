@@ -376,17 +376,7 @@ local isHopping = false
 local function serverHop()
     if isHopping then return end
     isHopping = true
-    notify("Auto Server Hop", "Queueing script & finding new server...", 6)
-
-    local qt = (syn and syn.queue_on_teleport) or queue_on_teleport or (fluxus and fluxus.queue_on_teleport)
-    if qt then
-        qt([[
-            task.wait(3)
-            pcall(function()
-                loadstring(game:HttpGet("https://raw.githubusercontent.com/projecthyper10-stack/HYPER-LOADER.NEW/refs/heads/main/loader-v2.lua"))()
-            end)
-        ]])
-    end
+    notify("Auto Server Hop", "Finding new server...", 4)
 
     task.spawn(function()
         local placeId, currentJobId = game.PlaceId, game.JobId
