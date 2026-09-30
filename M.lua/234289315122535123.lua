@@ -996,7 +996,7 @@ sections.SettingsConfig:Toggle({ Name = "Auto Save Changes", Description = "Auto
     Default = ConfigState.AutoSave == nil and true or ConfigState.AutoSave,
     Callback = function(v) ConfigState.AutoSave = v if v then SaveConfig() end end }, "AutoSaveChanges")
 
-MacLib:SetFolder("Maclib_CaliShootout")
+MacLib:SetFolder("x2hyper_CaliShootout")
 tabs.UISettings:InsertConfigSection("Right")
 tabs.Home:Select()
 MacLib:LoadAutoLoadConfig()
