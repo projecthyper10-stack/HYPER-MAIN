@@ -2379,7 +2379,7 @@ if setclipboard then
     })
 end
 
-MacLib:SetFolder("Maclib_MM2")
+MacLib:SetFolder("x2hyper_MM2")
 tabs.UISettings:InsertConfigSection("Right")
 
 tabs.Home:Select()
